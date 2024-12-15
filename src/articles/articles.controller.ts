@@ -1,17 +1,17 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   NotFoundException,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ArticleEntity } from './entities/article.entity';
 
 @Controller('articles')
@@ -21,19 +21,23 @@ export class ArticlesController {
 
   @Post()
   @ApiCreatedResponse({ type: ArticleEntity })
-  create(@Body() createArticleDto: CreateArticleDto) {
-    return this.articlesService.create(createArticleDto);
+  async create(@Body() createArticleDto: CreateArticleDto) {
+    return new ArticleEntity(
+      await this.articlesService.create(createArticleDto),
+    );
   }
 
   @Get('drafts')
   @ApiOkResponse({ type: ArticleEntity, isArray: true })
-  findDrafts() {
-    return this.articlesService.findDrafts();
+  async findDrafts() {
+    const drafts = await this.articlesService.findDrafts();
+    return drafts.map((draft) => new ArticleEntity(draft));
   }
   @Get()
   @ApiOkResponse({ type: ArticleEntity, isArray: true })
-  findAll() {
-    return this.articlesService.findAll();
+  async findAll() {
+    const articles = await this.articlesService.findAll();
+    return articles.map((article) => new ArticleEntity(article));
   }
 
   @Get(':id')
@@ -43,18 +47,23 @@ export class ArticlesController {
     if (!article) {
       throw new NotFoundException(`Article with ID "${id}" not found.`);
     }
-    return article;
+    return new ArticleEntity(article);
   }
 
   @Patch(':id')
   @ApiOkResponse({ type: ArticleEntity })
-  update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
-    return this.articlesService.update(id, updateArticleDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateArticleDto: UpdateArticleDto,
+  ) {
+    return new ArticleEntity(
+      await this.articlesService.update(id, updateArticleDto),
+    );
   }
 
   @Delete(':id')
   @ApiOkResponse({ type: ArticleEntity })
-  remove(@Param('id') id: string) {
-    return this.articlesService.remove(id);
+  async remove(@Param('id') id: string) {
+    return new ArticleEntity(await this.articlesService.remove(id));
   }
 }
